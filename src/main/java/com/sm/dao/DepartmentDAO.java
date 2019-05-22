@@ -12,4 +12,6 @@ public interface DepartmentDAO {
      * @throws SQLException
      */
     List<Department> getAll() throws SQLException;
+
+    int deleteDepartments(Integer id) throws SQLException;
 }
