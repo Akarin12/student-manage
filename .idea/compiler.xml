@@ -9,7 +9,7 @@
         <module name="student-manage" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
+    <bytecodeTargetLevel target="8">
       <module name="student-manage" target="8" />
     </bytecodeTargetLevel>
   </component>

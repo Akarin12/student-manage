@@ -14,4 +14,12 @@ public interface DepartmentDAO {
     List<Department> getAll() throws SQLException;
 
     int deleteDepartments(Integer id) throws SQLException;
+
+    /**
+     * 新增院系
+     * @param department
+     * @return int
+     * @throws SQLException
+     */
+    int insertDepartment(Department department) throws SQLException;
 }

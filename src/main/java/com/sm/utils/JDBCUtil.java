@@ -4,7 +4,7 @@ import java.sql.*;
 
 
 public class JDBCUtil {
-    private static String url = "jdbc:mysql://127.0.0.1:3306/db_student";
+    private static String url = "jdbc:mysql://127.0.0.1:3306/db_student?useUnicode=true&characterEncoding=utf8";
     private static String name = "root";
     private static String password = "root";
     private static Connection connnection = null;

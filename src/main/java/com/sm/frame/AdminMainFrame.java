@@ -2,13 +2,26 @@ package com.sm.frame;
 
 
 import com.sm.entity.Admin;
+import com.sm.entity.CClass;
 import com.sm.entity.Department;
+import com.sm.entity.StudentVO;
+import com.sm.factory.DAOFactory;
 import com.sm.factory.ServiceFactory;
+import com.sm.service.DepartmentService;
+import com.sm.ui.ImgPanel;
+import com.sm.utils.AliOSSUtil;
+import sun.swing.table.DefaultTableCellHeaderRenderer;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableColumn;
+import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
+import java.io.File;
 import java.util.List;
 
 public class AdminMainFrame extends JFrame {
@@ -32,10 +45,46 @@ public class AdminMainFrame extends JFrame {
     private JPanel contentPanel;
     private JLabel adminLabel;
     private JLabel timeLabel;
-    private Font font;
+    private JLabel logoLabel;
+    private JButton reButton;
+    private JTextField classTextField;
+    private JButton 新增班级Button;
+    private JPanel topPanel;
+    private JScrollPane centerJScrollPanel;
+    private JPanel treePanel;
+    private JPanel classContentPanel;
+    private String uploadFileUrl;
+    private File file;
 
+    private Department department;
+    private DepartmentService departmentService;
+
+    private int departmentId = 0;
+    private JComboBox<Department> depcomboBox;
+    private JPanel stuTopPanel;
+    private JComboBox<Department> comboBox1;
+    private JComboBox<CClass> comboBox2;
+    private JTextField findStuField;
+    private JButton 搜索Button;
+    private JButton 批量导入Button;
+    private JButton 新增学生Button;
+    private ImgPanel infoPanel;
+    private JPanel tablePanel;
+    private JLabel stuAvatarLabel;
+    private JLabel stuIdLabel;
+    private JLabel stuClassLabel;
+    private JLabel stuNameLabel;
+    private JLabel stuGenderLabel;
+    private JTextField stuAddressField;
+    private JTextField stuPhoneField;
+    private JLabel stuBirthdayLabel;
+    private JButton 编辑Button;
+    private JLabel stuDepLabel;
+    private JButton 初始化数据Button;
 
     public AdminMainFrame(Admin admin) {
+        departmentService = ServiceFactory.getDepartmentServiceInstance();
+
         //窗体基本属性
         setTitle("管理员主界面");
         setContentPane(rootPanel);
@@ -43,7 +92,7 @@ public class AdminMainFrame extends JFrame {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setVisible(true);
 
-        Font font = new Font("宋体",Font.BOLD,24);
+        Font font = new Font("宋体", Font.BOLD, 24);
         timeLabel.setFont(font);
         adminLabel.setFont(font);
 
@@ -69,10 +118,12 @@ public class AdminMainFrame extends JFrame {
                 cardLayout.show(centerPanel, "card1");
             }
         });
+
         班级管理Button.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 cardLayout.show(centerPanel, "card2");
+                showClassPanel();
             }
         });
 
@@ -80,15 +131,73 @@ public class AdminMainFrame extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 cardLayout.show(centerPanel, "card3");
+                infoPanel.setFileName("info.jpg");
+                infoPanel.repaint();
+                List<StudentVO> students = ServiceFactory.getStudentServiceInstance().selectAll();
+                showStudentTable(students);
+
+                Department tip1 = new Department();
+                tip1.setDepartmentName("请选择院系");
+                comboBox1.addItem(tip1);
+                CClass tip2 = new CClass();
+                tip2.setClassName("请选择班级");
+                comboBox2.addItem(tip2);
+
+                List<Department> departments = ServiceFactory.getDepartmentServiceInstance().selectAll();
+                for (Department department : departments) {
+                    comboBox1.addItem(department);
+                }
+
+                List<CClass> cClasses = ServiceFactory.getCClassServiceInstance().selectAll();
+                for (CClass cClass : cClasses) {
+                    comboBox2.addItem(cClass);
+                }
+
+                comboBox1.addItemListener(new ItemListener() {
+                    @Override
+                    public void itemStateChanged(ItemEvent e) {
+                        if (e.getStateChange() == ItemEvent.SELECTED) {
+                            int index = comboBox1.getSelectedIndex();
+                            if (index != 0) {
+                                departmentId = comboBox1.getItemAt(index).getId();
+                                List<StudentVO> studentList = ServiceFactory.getStudentServiceInstance().selectByDepartmentId(departmentId);
+                                showStudentTable(studentList);
+                                List<CClass> cClassList = ServiceFactory.getCClassServiceInstance().selectByDepartmentId(departmentId);
+                                comboBox2.removeAllItems();
+                                CClass tip = new CClass();
+                                tip.setClassName("请选择班级");
+                                comboBox2.addItem(tip);
+                                for (CClass cClass : cClassList) {
+                                    comboBox2.addItem(cClass);
+                                }
+                            }
+                        }
+                    }
+                });
+
+                comboBox2.addItemListener(new ItemListener() {
+                    @Override
+                    public void itemStateChanged(ItemEvent e) {
+                        if (e.getStateChange() == ItemEvent.SELECTED) {
+                            int index = comboBox2.getSelectedIndex();
+                            if (index != 0) {
+                                int classId = comboBox2.getItemAt(index).getId();
+                                List<StudentVO> studentList = ServiceFactory.getStudentServiceInstance().selectByClassId(classId);
+                                showStudentTable(studentList);
+                            }
+                        }
+                    }
+                });
+
             }
         });
+
         奖惩管理Button.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 cardLayout.show(centerPanel, "card4");
             }
         });
-
 
         新增院系Button.addActionListener(new ActionListener() {
             @Override
@@ -101,19 +210,260 @@ public class AdminMainFrame extends JFrame {
                 }
             }
         });
+
         刷新数据Button.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 showDepartments();
             }
         });
+
+        depNameField.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                depNameField.setText("");
+            }
+        });
+
+        选择logo图Button.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setCurrentDirectory(new File("D:\\resources\\images\\avatar\\new"));
+                int result = fileChooser.showOpenDialog(rootPanel);
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    //选中文件
+                    file = fileChooser.getSelectedFile();
+                    //通过文件创建icon对象
+//                    Icon icon = new ImageIcon(file.getAbsolutePath());
+                    ImageIcon icon = new ImageIcon(file.getAbsolutePath());
+                    icon.setImage(icon.getImage().getScaledInstance(200, 200, Image.SCALE_DEFAULT));
+
+                    //通过标签显示图片
+                    logoLabel.setIcon(icon);
+                    //设置标签可见
+                    logoLabel.setVisible(true);
+                    //将按钮隐藏
+                    选择logo图Button.setVisible(false);
+                    reButton.setVisible(true);
+                }
+            }
+        });
+
+        新增Button.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                //上传文件到OSS并返回外链
+                uploadFileUrl = AliOSSUtil.ossUpload(file);
+                //创建Department对象，并设置相应属性
+                Department department = new Department();
+                department.setDepartmentName(depNameField.getText().trim());
+                department.setLogo(uploadFileUrl);
+//                department.setDescription(descriptionArea.getText().trim());
+                //调用service实现新增功能
+                int n = ServiceFactory.getDepartmentServiceInstance().addDepartment(department);
+                if (n == 1) {
+                    JOptionPane.showMessageDialog(rootPanel, "新增院系成功");
+                    //新增成功后，将侧边栏隐藏
+                    leftPanel.setVisible(false);
+                    //刷新界面数据
+                    showDepartments();
+                    //将图片预览标签隐藏
+                    logoLabel.setVisible(false);
+                    //将选择图片的按钮可见
+                    选择logo图Button.setVisible(true);
+                    //清空文本框
+                    depNameField.setText("");
+//                    descriptionArea.setText("");
+                } else {
+                    JOptionPane.showMessageDialog(rootPanel, "新增院系失败");
+                }
+            }
+        });
+
+        reButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                logoLabel.setVisible(false);
+                选择logo图Button.setVisible(true);
+                reButton.setVisible(false);
+            }
+        });
+
+        新增班级Button.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+            }
+        });
+
+        新增班级Button.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String s = classTextField.getText();
+                String[] strings = s.split("；");
+                for (String ss : strings) {
+                    CClass cClass = new CClass();
+                    cClass.setClassName(ss);
+                    cClass.setDepartmentId(departmentId);
+                    ServiceFactory.getCClassServiceInstance().addClass(cClass);
+                }
+                showClassPanel();
+                classTextField.setText("");
+            }
+        });
+
+        初始化数据Button.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                List<StudentVO> students = ServiceFactory.getStudentServiceInstance().selectAll();
+                showStudentTable(students);
+                comboBox1.setSelectedIndex(0);
+                comboBox2.removeAllItems();
+                CClass tip2 = new CClass();
+                tip2.setClassName("请选择班级");
+                comboBox2.addItem(tip2);
+                List<CClass> cClassList = ServiceFactory.getCClassServiceInstance().selectAll();
+                for (CClass cClass : cClassList) {
+                    comboBox2.addItem(cClass);
+                }
+
+                stuAvatarLabel.setText("");
+                stuIdLabel.setText("");
+                stuDepLabel.setText("");
+                stuClassLabel.setText("");
+                stuNameLabel.setText("");
+                stuGenderLabel.setText("");
+                stuAddressField.setText("");
+                stuBirthdayLabel.setText("");
+                stuPhoneField.setText("");
+            }
+        });
+
+        搜索Button.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String keywords = findStuField.getText().trim();
+                List<StudentVO> studentList = ServiceFactory.getStudentServiceInstance().selectByKeywords(keywords);
+                if (studentList != null) {
+                    showStudentTable(studentList);
+                }
+            }
+        });
     }
 
 
-//    public static void main(String[] args) {
+    public static void main(String[] args) {
 //        new AdminMainFrame(Admin admin);
-//    }
+//        new AdminMainFrame(DAOFactory.getAdminDAOInstance().getAdminByAccount("tianzhen"));
 
+    }
+
+    /**
+     * 展示班级的数据
+     */
+    private void showClassPanel() {
+        List<Department> departmentlist = ServiceFactory.getDepartmentServiceInstance().selectAll();
+        showCombobox(departmentlist);
+        showTree(departmentlist);
+        showClasses(departmentlist);
+    }
+
+    private void showCombobox(List<Department> departmentList) {
+        for (Department department : departmentList
+        ) {
+            depcomboBox.addItem(department);
+        }
+    }
+
+    private void showTree(List<Department> departmentList) {
+        DefaultMutableTreeNode top = new DefaultMutableTreeNode("南工院");
+        for (Department department :
+                departmentList) {
+            DefaultMutableTreeNode group = new DefaultMutableTreeNode(department.getDepartmentName());
+            top.add(group);
+            List<CClass> cClassList = ServiceFactory.getCClassServiceInstance().selectByDepartmentId(department.getId());
+            for (CClass cClass :
+                    cClassList) {
+                DefaultMutableTreeNode node = new DefaultMutableTreeNode(cClass.getClassName());
+                group.add(node);
+            }
+        }
+        final JTree tree = new JTree(top);
+        tree.setRowHeight(30);
+        tree.setFont(new Font("宋体", Font.PLAIN, 20));
+        treePanel.add(tree);
+        treePanel.revalidate();
+
+    }
+
+    private void showClasses(List<Department> departmentList) {
+        classContentPanel.removeAll();
+        Font titleFont = new Font("微软雅黑", Font.PLAIN, 20);
+        for (Department department :
+                departmentList) {
+            ImgPanel depPanel = new ImgPanel();
+//            depPanel.setFileName("66.jpg");
+            depPanel.repaint();
+            depPanel.setPreferredSize(new Dimension(350, 500));
+            depPanel.setLayout(null);
+            JLabel depNameLabel = new JLabel(department.getDepartmentName());
+            depNameLabel.setFont(titleFont);
+            depNameLabel.setBounds(130, 15, 200, 30);
+            List<CClass> cClassList = ServiceFactory.getCClassServiceInstance().selectByDepartmentId(department.getId());
+            DefaultListModel listModel = new DefaultListModel();
+            for (CClass cClass :
+                    cClassList) {
+                listModel.addElement(cClass);
+            }
+            JList<CClass> jList = new JList<>(listModel);
+            JScrollPane listScrollPanel = new JScrollPane(jList);
+            listScrollPanel.setBounds(50, 120, 250, 300);
+            depPanel.add(depNameLabel);
+            depPanel.setFont(titleFont);
+            depNameLabel.setFont(titleFont);
+            depPanel.add(listScrollPanel);
+            classContentPanel.add(depPanel);
+            JPopupMenu jPopupMenu = new JPopupMenu();
+            JMenuItem item1 = new JMenuItem("修改");
+            JMenuItem item2 = new JMenuItem("删除");
+            jPopupMenu.add(item1);
+            jPopupMenu.add(item2);
+            jList.add(jPopupMenu);
+            jList.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    int index = jList.getSelectedIndex();
+                    if (e.getButton() == 3) {
+                        jPopupMenu.show(jList, e.getX(), e.getY());
+                        CClass cClass = jList.getModel().getElementAt(index);
+                        item2.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                int choice = JOptionPane.showConfirmDialog(depPanel, "确定删除吗？");
+                                if (choice == 0) {
+                                    ServiceFactory.getCClassServiceInstance().delectClass(cClass.getId());
+                                    listModel.remove(index);
+                                    showClassPanel();
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+        }
+        //新增班级数据
+        depcomboBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                //得到选中项的索引
+                int index = depcomboBox.getSelectedIndex();
+                //按照索引取出项，就是一个Department对象，然后取出其id备用
+                departmentId = depcomboBox.getItemAt(index).getId();
+            }
+        });
+
+
+    }
 
     private void showDepartments() {
         //移除原有数据
@@ -122,7 +472,7 @@ public class AdminMainFrame extends JFrame {
         List<Department> departmentList = ServiceFactory.getDepartmentServiceInstance().selectAll();
         int len = departmentList.size();
         int row = len % 4 == 0 ? len / 4 : len / 4 + 1;
-        GridLayout gridLayout = new GridLayout(row, 4, 15, 15);
+        GridLayout gridLayout = new GridLayout(0, 4, 15, 15);
         contentPanel.setLayout(gridLayout);
         for (Department department : departmentList) {
             //给每个院系对象创建一个面板
@@ -135,6 +485,7 @@ public class AdminMainFrame extends JFrame {
 
             JButton delBtn = new JButton("删除");
             //图标标签加入院系面板
+
 
             depPanel.add(delBtn);
             depPanel.add(logoLabel);
@@ -159,4 +510,55 @@ public class AdminMainFrame extends JFrame {
             });
         }
     }
+
+    //展示学生信息
+    private void showStudentTable(List<StudentVO> studentList) {
+        tablePanel.removeAll();
+        JTable table = new JTable();
+        DefaultTableModel model = new DefaultTableModel();
+        table.setModel(model);
+        model.setColumnIdentifiers(new String[]{"学号", "院系", "班级", "姓名", "性别", "地址", "手机号", "出生日期", "头像"});
+        for (StudentVO student : studentList) {
+            Object[] objects = new Object[]{
+                    student.getId(), student.getDepartmentName(), student.getClassName(),
+                    student.getStudentName(), student.getGender(), student.getAddress(),
+                    student.getPhone(), student.getBirthday(), student.getAvatar()
+            };
+            model.addRow(objects);
+            TableColumn tc = table.getColumnModel().getColumn(8);
+            tc.setMinWidth(0);
+            tc.setMaxWidth(0);
+            JTableHeader header = table.getTableHeader();
+            DefaultTableCellHeaderRenderer hr = new DefaultTableCellHeaderRenderer();
+            hr.setHorizontalAlignment(JLabel.CENTER);
+            header.setDefaultRenderer(hr);
+            header.setPreferredSize(new Dimension(header.getWidth(), 40));
+            header.setFont(new Font("微软雅黑", 0, 22));
+            table.setRowHeight(35);
+            table.setBackground(new Color(60, 60, 60));
+            table.setGridColor(new Color(240, 240, 240));
+            DefaultTableCellHeaderRenderer r = new DefaultTableCellHeaderRenderer();
+            r.setHorizontalAlignment(JLabel.CENTER);
+            table.setDefaultRenderer(Object.class, r);
+            JScrollPane scrollPane = new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+            tablePanel.add(scrollPane, BorderLayout.CENTER);
+
+            table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+                @Override
+                public void valueChanged(ListSelectionEvent e) {
+                    int row = table.getSelectedRow();
+                    stuIdLabel.setText("学号:" + table.getValueAt(row, 0).toString());
+                    stuDepLabel.setText("学院:" + table.getValueAt(row, 1).toString());
+                    stuClassLabel.setText("班级:" + table.getValueAt(row, 2).toString());
+                    stuNameLabel.setText("姓名:" + table.getValueAt(row, 3).toString());
+                    stuGenderLabel.setText("性别:" + table.getValueAt(row, 4).toString());
+                    stuAddressField.setText(table.getValueAt(row, 5).toString());
+                    stuPhoneField.setText(table.getValueAt(row, 6).toString());
+                    stuBirthdayLabel.setText("生日:" + table.getValueAt(row, 7).toString());
+                    stuAvatarLabel.setText("<html><img src='" + table.getValueAt(row, 8).toString() + "' width=200 height=200/></html>");
+                }
+            });
+        }
+    }
+
 }

@@ -24,4 +24,9 @@ public class DepartmentServiceImplTest {
         int id = 8;
         departmentService.deleteDepartment(id);
     }
+
+    @Test
+    public void addDepartment() {
+
+    }
 }
