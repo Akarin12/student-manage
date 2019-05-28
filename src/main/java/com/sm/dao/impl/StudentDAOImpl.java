@@ -154,6 +154,38 @@ public class StudentDAOImpl implements StudentDAO {
         return n;
     }
 
+    @Override
+    public int countByDepartmentId(int departmentId) throws SQLException {
+        JDBCUtil jdbcUtil = JDBCUtil.getInitJDBCUtil();
+        Connection connection = jdbcUtil.getConnection();
+        String sql = "SELECT COUNT(*) FROM t_student  t1 LEFT JOIN t_class t2 ON t1.class_id = t2.id\n " +
+                "LEFT JOIN t_department t3 ON t2.department_id = t3.id\n " +
+                "WHERE t3.id = ? ";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        pstmt.setInt(1, departmentId);
+        ResultSet rs = pstmt.executeQuery();
+        int rowCount = 0;
+        if (rs.next()) {
+            rowCount = rs.getInt(1);
+        }
+        return rowCount;
+    }
+
+    @Override
+    public int countByClassId(int classId) throws SQLException {
+        JDBCUtil jdbcUtil = JDBCUtil.getInitJDBCUtil();
+        Connection connection = jdbcUtil.getConnection();
+        String sql = "SELECT COUNT(*) FROM t_student  WHERE class_id=? ";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        pstmt.setInt(1, classId);
+        ResultSet rs = pstmt.executeQuery();
+        int rowCount = 0;
+        if (rs.next()) {
+            rowCount = rs.getInt(1);
+        }
+        return rowCount;
+    }
+
     private List<StudentVO> convert(ResultSet rs) throws SQLException {
         List<StudentVO> students = new ArrayList<>();
         while (rs.next()) {

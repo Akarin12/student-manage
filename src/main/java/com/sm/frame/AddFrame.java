@@ -5,6 +5,7 @@ import com.sm.entity.CClass;
 import com.sm.entity.Student;
 import com.sm.entity.StudentVO;
 import com.sm.factory.ServiceFactory;
+import com.sm.ui.ImgPanel;
 import com.sm.utils.AliOSSUtil;
 
 import javax.swing.*;
@@ -16,7 +17,7 @@ import java.util.List;
 import java.util.Locale;
 
 public class AddFrame extends JFrame {
-    private JPanel rootPanel;
+    private ImgPanel rootPanel;
     private JTextField idField;
     private JTextField nameField;
     private JComboBox<CClass> classComboBox;
@@ -36,6 +37,8 @@ public class AddFrame extends JFrame {
     public AddFrame(AdminMainFrame adminMainFrame) {
         this.adminMainFrame = adminMainFrame;
         setContentPane(rootPanel);
+        rootPanel.setFileName("addbg.png");
+        rootPanel.repaint();
         setUndecorated(true);
         setTitle("新增学生界面");
         setSize(1000, 800);

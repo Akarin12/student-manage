@@ -3,6 +3,7 @@ package com.sm.service;
 import com.sm.entity.Department;
 
 import java.util.List;
+import java.util.Map;
 
 public interface DepartmentService {
     /**
@@ -23,4 +24,10 @@ public interface DepartmentService {
      * @return int
      */
     int addDepartment(Department department);
+
+    /**
+     *
+     * @return
+     */
+    List<Map> selectDepartmentInfo();
 }

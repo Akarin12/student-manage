@@ -41,4 +41,12 @@ public interface CClassDAO {
      * @throws SQLException
      */
     int deleteClass(int id) throws SQLException;
+
+    /**
+     *
+     * @param departmentId
+     * @return
+     * @throws SQLException
+     */
+    int countByDepartmentId(int departmentId) throws SQLException;
 }

@@ -88,4 +88,15 @@ public class StudentServiceImpl implements StudentService {
         }
         return n;
     }
+
+    @Override
+    public int countStudentByClassId(int classId) {
+        int n = 0;
+        try {
+            n = studentDAO.countByClassId(classId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return n;
+    }
 }

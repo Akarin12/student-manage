@@ -67,4 +67,20 @@ public interface StudentDAO {
      * @throws SQLException
      */
     int insertStudent(Student student) throws SQLException;
+
+    /**
+     *
+     * @param departmentId
+     * @return
+     * @throws SQLException
+     */
+    int countByDepartmentId(int departmentId) throws SQLException;
+
+    /**
+     *
+     * @param classId
+     * @return
+     * @throws SQLException
+     */
+    int countByClassId(int classId) throws SQLException;
 }

@@ -20,6 +20,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 public class AdminMainFrame extends JFrame {
     private JPanel rootPanel;
@@ -349,6 +350,7 @@ public class AdminMainFrame extends JFrame {
                 }
             }
         });
+
         新增学生Button.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -360,10 +362,55 @@ public class AdminMainFrame extends JFrame {
     }
 
 
-    public static void main(String[] args) {
-//        new AdminMainFrame(Admin admin);
+    public static void main(String[] args) throws Exception {
+//        new AdminMainFrame(new Admin("我"));
 //        new AdminMainFrame(DAOFactory.getAdminDAOInstance().getAdminByAccount("tianzhen"));
 
+    }
+
+    private void showDepartments() {
+        //移除原有数据
+        contentPanel.removeAll();
+        //从service层获取到所有院系列表
+        List<Map> departmentList = ServiceFactory.getDepartmentServiceInstance().selectDepartmentInfo();        int len = departmentList.size();
+        //获取院系统计数据
+        for (Map map : departmentList) {
+            //给每个院系对象创建一个面板
+            final JPanel depPanel = new JPanel(new BorderLayout());
+            Department department = (Department) map.get("department");
+            int classCount = (int) map.get("classCount");
+            int studentCount = (int) map.get("studentCount");
+            depPanel.setLayout(new BorderLayout());
+            depPanel.setPreferredSize(new Dimension(300, 300));
+            //将院系名称设置给面板标题
+            depPanel.setBorder(BorderFactory.createTitledBorder(department.getDepartmentName()));
+            //新建一个Label用来放置院系logo，并指定大小
+            JLabel logoLabel = new JLabel("<html><img src='" + department.getLogo() + "' width=200 height=200/></html>");
+            //图标标签加入院系面板
+            depPanel.add(logoLabel, BorderLayout.CENTER);
+            //将院系统计数据加入面板
+            JLabel infoLabel = new JLabel("班级" + classCount + "个,学生" + studentCount + "人");
+            depPanel.add(infoLabel, BorderLayout.SOUTH);
+            //院系面板加入主体内容面板
+            contentPanel.add(depPanel);
+            //刷新主体内容面板
+            contentPanel.revalidate();
+            JButton delBtn = new JButton("删除");
+            delBtn.setSize(new Dimension(50, 30));
+            depPanel.add(delBtn, BorderLayout.EAST);
+            delBtn.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    int n = JOptionPane.showConfirmDialog(null, "确认删除吗", "warring!", JOptionPane.YES_NO_CANCEL_OPTION);
+                    if (n == JOptionPane.YES_OPTION) {
+                        contentPanel.remove(depPanel);
+                        contentPanel.repaint();
+                        ServiceFactory.getDepartmentServiceInstance().deleteDepartment(department.getId());
+                    }
+                    showDepartments();
+                }
+            });
+        }
     }
 
     /**
@@ -384,6 +431,7 @@ public class AdminMainFrame extends JFrame {
     }
 
     private void showTree(List<Department> departmentList) {
+        treePanel.removeAll();
         DefaultMutableTreeNode top = new DefaultMutableTreeNode("南工院");
         for (Department department :
                 departmentList) {
@@ -392,16 +440,16 @@ public class AdminMainFrame extends JFrame {
             List<CClass> cClassList = ServiceFactory.getCClassServiceInstance().selectByDepartmentId(department.getId());
             for (CClass cClass :
                     cClassList) {
-                DefaultMutableTreeNode node = new DefaultMutableTreeNode(cClass.getClassName());
+                int num = ServiceFactory.getStudentServiceInstance().countStudentByClassId(cClass.getId());
+                DefaultMutableTreeNode node = new DefaultMutableTreeNode(cClass.getClassName() + "(" + num + "人)");
                 group.add(node);
             }
         }
         final JTree tree = new JTree(top);
         tree.setRowHeight(30);
-        tree.setFont(new Font("宋体", Font.PLAIN, 20));
+        tree.setFont(new Font("微软雅黑", Font.PLAIN, 20));
         treePanel.add(tree);
         treePanel.revalidate();
-
     }
 
     private void showClasses(List<Department> departmentList) {
@@ -411,7 +459,7 @@ public class AdminMainFrame extends JFrame {
                 departmentList) {
             ImgPanel depPanel = new ImgPanel();
 //            depPanel.setFileName("66.jpg");
-            depPanel.repaint();
+//            depPanel.repaint();
             depPanel.setPreferredSize(new Dimension(350, 500));
             depPanel.setLayout(null);
             JLabel depNameLabel = new JLabel(department.getDepartmentName());
@@ -472,52 +520,6 @@ public class AdminMainFrame extends JFrame {
         });
 
 
-    }
-
-    private void showDepartments() {
-        //移除原有数据
-        contentPanel.removeAll();
-        //从service层获取到所有院系列表
-        List<Department> departmentList = ServiceFactory.getDepartmentServiceInstance().selectAll();
-        int len = departmentList.size();
-        int row = len % 4 == 0 ? len / 4 : len / 4 + 1;
-        GridLayout gridLayout = new GridLayout(0, 4, 15, 15);
-        contentPanel.setLayout(gridLayout);
-        for (Department department : departmentList) {
-            //给每个院系对象创建一个面板
-            JPanel depPanel = new JPanel();
-            depPanel.setPreferredSize(new Dimension(200, 200));
-            //将院系名称设置给面板标题
-            depPanel.setBorder(BorderFactory.createTitledBorder(department.getDepartmentName()));
-            //新建一个Label用来放置院系logo，并指定大小
-            JLabel logoLabel = new JLabel("<html><img src='" + department.getLogo() + "' width=200 height=200/></html>");
-
-            JButton delBtn = new JButton("删除");
-            //图标标签加入院系面板
-
-
-            depPanel.add(delBtn);
-            depPanel.add(logoLabel);
-
-            //院系面板加入主体内容面板
-            contentPanel.add(depPanel);
-            //刷新主体内容面板
-            contentPanel.revalidate();
-
-
-            delBtn.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    int n = JOptionPane.showConfirmDialog(null, "确定要删除吗", "警告", JOptionPane.YES_NO_OPTION);
-                    if (n == JOptionPane.YES_OPTION) {
-                        contentPanel.remove(depPanel);
-                        contentPanel.repaint();
-                        ServiceFactory.getDepartmentServiceInstance().deleteDepartment(department.getId());
-                    }
-
-                }
-            });
-        }
     }
 
     //展示学生信息

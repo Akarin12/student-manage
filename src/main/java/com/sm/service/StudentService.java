@@ -50,4 +50,11 @@ public interface StudentService {
      * @return
      */
     int insertStudent(Student student);
+
+    /**
+     *
+     * @param classId
+     * @return
+     */
+    int countStudentByClassId(int classId);
 }
