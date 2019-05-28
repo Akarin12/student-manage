@@ -59,4 +59,12 @@ public interface StudentDAO {
      * @throws SQLException
      */
     int deleteById(String id) throws SQLException;
+
+    /**
+     *
+     * @param student
+     * @return
+     * @throws SQLException
+     */
+    int insertStudent(Student student) throws SQLException;
 }

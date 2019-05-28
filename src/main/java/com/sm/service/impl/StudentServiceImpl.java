@@ -1,5 +1,6 @@
 package com.sm.service.impl;
 
+import com.sm.entity.Student;
 import com.sm.service.StudentService;
 import com.sm.dao.StudentDAO;
 import com.sm.entity.StudentVO;
@@ -53,5 +54,38 @@ public class StudentServiceImpl implements StudentService {
             e.printStackTrace();
         }
         return students;
+    }
+
+    @Override
+    public int deleteById(String id) {
+        int n = 0;
+        try {
+            n = studentDAO.deleteById(id);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return n;
+    }
+
+    @Override
+    public int updateById(Student student) {
+        int n = 0;
+        try {
+            n = studentDAO.updateStudent(student);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return n;
+    }
+
+    @Override
+    public int insertStudent(Student student) {
+        int n =0;
+        try {
+            n = studentDAO.insertStudent(student);
+        } catch (SQLException e) {
+            System.err.print("新增学生信息出现异常");
+        }
+        return n;
     }
 }

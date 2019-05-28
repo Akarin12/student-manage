@@ -5,8 +5,16 @@ import com.sm.entity.Department;
 import java.util.List;
 
 public interface DepartmentService {
+    /**
+     *
+     * @return
+     */
     List<Department> selectAll();
 
+    /**
+     *
+     * @param id
+     */
     void deleteDepartment(int id);
 
     /**

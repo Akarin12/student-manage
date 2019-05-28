@@ -5,10 +5,7 @@ import com.sm.entity.Student;
 import com.sm.entity.StudentVO;
 import com.sm.utils.JDBCUtil;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -111,12 +108,50 @@ public class StudentDAOImpl implements StudentDAO {
 
     @Override
     public int updateStudent(Student student) throws SQLException {
-        return 0;
+        JDBCUtil jdbcUtil = JDBCUtil.getInitJDBCUtil();
+        Connection connection = jdbcUtil.getConnection();
+        String sql = "UPDATE t_student SET address=?,phone=? WHERE  id=? ";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        pstmt.setString(1, student.getAddress());
+        pstmt.setString(2, student.getPhone());
+        pstmt.setString(3, student.getId());
+        int n = pstmt.executeUpdate();
+        pstmt.close();
+        connection.close();
+        return n;
     }
 
     @Override
     public int deleteById(String id) throws SQLException {
-        return 0;
+        JDBCUtil jdbcUtil = JDBCUtil.getInitJDBCUtil();
+        Connection connection = jdbcUtil.getConnection();
+        String sql = "DELETE FROM t_student WHERE id = ? ";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        pstmt.setString(1, id);
+        int n = pstmt.executeUpdate();
+        pstmt.close();
+        connection.close();
+        return n;
+    }
+
+    @Override
+    public int insertStudent(Student student) throws SQLException {
+        JDBCUtil jdbcUtil = JDBCUtil.getInitJDBCUtil();
+        Connection connection = jdbcUtil.getConnection();
+        String sql = "INSERT INTO t_student (id,class_id,student_name,avatar,gender,birthday,address,phone) VALUES (?,?,?,?,?,?,?,?) ";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        pstmt.setString(1, student.getId());
+        pstmt.setInt(2, student.getClassId());
+        pstmt.setString(3, student.getStudentName());
+        pstmt.setString(4, student.getAvatar());
+        pstmt.setString(5, student.getGender());
+        pstmt.setDate(6, new Date(student.getBirthday().getTime()));
+        pstmt.setString(7, student.getAddress());
+        pstmt.setString(8, student.getPhone());
+        int n = pstmt.executeUpdate();
+        pstmt.close();
+        connection.close();
+        return n;
     }
 
     private List<StudentVO> convert(ResultSet rs) throws SQLException {

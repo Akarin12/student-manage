@@ -1,10 +1,7 @@
 package com.sm.frame;
 
 
-import com.sm.entity.Admin;
-import com.sm.entity.CClass;
-import com.sm.entity.Department;
-import com.sm.entity.StudentVO;
+import com.sm.entity.*;
 import com.sm.factory.DAOFactory;
 import com.sm.factory.ServiceFactory;
 import com.sm.service.DepartmentService;
@@ -81,6 +78,8 @@ public class AdminMainFrame extends JFrame {
     private JButton 编辑Button;
     private JLabel stuDepLabel;
     private JButton 初始化数据Button;
+
+    private int row;
 
     public AdminMainFrame(Admin admin) {
         departmentService = ServiceFactory.getDepartmentServiceInstance();
@@ -350,6 +349,14 @@ public class AdminMainFrame extends JFrame {
                 }
             }
         });
+        新增学生Button.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                new AddFrame(AdminMainFrame.this);
+
+
+            }
+        });
     }
 
 
@@ -436,22 +443,24 @@ public class AdminMainFrame extends JFrame {
                     int index = jList.getSelectedIndex();
                     if (e.getButton() == 3) {
                         jPopupMenu.show(jList, e.getX(), e.getY());
-                        CClass cClass = jList.getModel().getElementAt(index);
-                        item2.addActionListener(new ActionListener() {
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                int choice = JOptionPane.showConfirmDialog(depPanel, "确定删除吗？");
-                                if (choice == 0) {
-                                    ServiceFactory.getCClassServiceInstance().delectClass(cClass.getId());
-                                    listModel.remove(index);
-                                    showClassPanel();
-                                }
-                            }
-                        });
                     }
+                    CClass cClass = jList.getModel().getElementAt(index);
+                    item2.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            int choice = JOptionPane.showConfirmDialog(depPanel, "确定删除吗？");
+                            if (choice == 0) {
+                                ServiceFactory.getCClassServiceInstance().delectClass(cClass.getId());
+                                listModel.remove(index);
+                                showClassPanel();
+                            }
+                        }
+                    });
                 }
             });
         }
+
+
         //新增班级数据
         depcomboBox.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -512,7 +521,7 @@ public class AdminMainFrame extends JFrame {
     }
 
     //展示学生信息
-    private void showStudentTable(List<StudentVO> studentList) {
+    public void showStudentTable(List<StudentVO> studentList) {
         tablePanel.removeAll();
         JTable table = new JTable();
         DefaultTableModel model = new DefaultTableModel();
@@ -542,20 +551,68 @@ public class AdminMainFrame extends JFrame {
             table.setDefaultRenderer(Object.class, r);
             JScrollPane scrollPane = new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
             tablePanel.add(scrollPane, BorderLayout.CENTER);
-
-            table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            JPopupMenu jPopupMenu = new JPopupMenu();
+            JMenuItem item = new JMenuItem("删除");
+            jPopupMenu.add(item);
+            table.addMouseListener(new MouseAdapter() {
                 @Override
-                public void valueChanged(ListSelectionEvent e) {
-                    int row = table.getSelectedRow();
-                    stuIdLabel.setText("学号:" + table.getValueAt(row, 0).toString());
-                    stuDepLabel.setText("学院:" + table.getValueAt(row, 1).toString());
-                    stuClassLabel.setText("班级:" + table.getValueAt(row, 2).toString());
-                    stuNameLabel.setText("姓名:" + table.getValueAt(row, 3).toString());
-                    stuGenderLabel.setText("性别:" + table.getValueAt(row, 4).toString());
+                public void mouseClicked(MouseEvent e) {
+                    row = table.getSelectedRow();
+                    stuIdLabel.setText(table.getValueAt(row, 0).toString());
+                    stuDepLabel.setText(table.getValueAt(row, 1).toString());
+                    stuClassLabel.setText(table.getValueAt(row, 2).toString());
+                    stuNameLabel.setText(table.getValueAt(row, 3).toString());
+                    stuGenderLabel.setText(table.getValueAt(row, 4).toString());
                     stuAddressField.setText(table.getValueAt(row, 5).toString());
                     stuPhoneField.setText(table.getValueAt(row, 6).toString());
-                    stuBirthdayLabel.setText("生日:" + table.getValueAt(row, 7).toString());
+                    stuBirthdayLabel.setText(table.getValueAt(row, 7).toString());
                     stuAvatarLabel.setText("<html><img src='" + table.getValueAt(row, 8).toString() + "' width=200 height=200/></html>");
+                    编辑Button.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            if (e.getActionCommand().equals("编辑")) {
+                                stuAddressField.setEditable(true);
+                                stuAddressField.setEnabled(true);
+                                stuPhoneField.setEditable(true);
+                                stuPhoneField.setEnabled(true);
+                                编辑Button.setText("保存");
+                            }
+                            if (e.getActionCommand().equals("保存")) {
+                                Student student = new Student();
+                                student.setId(stuIdLabel.getText());
+                                student.setPhone(stuPhoneField.getText());
+                                student.setAddress(stuAddressField.getText());
+                                int n = ServiceFactory.getStudentServiceInstance().updateById(student);
+                                if (n == 1) {
+                                    model.setValueAt(stuAddressField.getText(), row, 5);
+                                    model.setValueAt(stuPhoneField.getText(), row, 6);
+                                    stuAddressField.setEditable(false);
+                                    stuAddressField.setEnabled(false);
+                                    stuPhoneField.setEditable(false);
+                                    stuPhoneField.setEnabled(false);
+                                    编辑Button.setText("编辑");
+
+                                }
+                            }
+                        }
+                    });
+                    if (e.getButton() == 3) {
+                        jPopupMenu.show(table, e.getX(), e.getY());
+                    }
+                }
+            });
+            item.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    String id = String.valueOf(table.getValueAt(row, 0));
+                    int choice = JOptionPane.showConfirmDialog(tablePanel, "确认删除吗");
+                    if (choice == 0) {
+                        if (row != -1) {
+                            model.removeRow(row);
+                        }
+                        ServiceFactory.getStudentServiceInstance().deleteById(id);
+                    }
+
                 }
             });
         }
