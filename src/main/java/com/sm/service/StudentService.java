@@ -7,7 +7,6 @@ import java.util.List;
 
 public interface StudentService {
     /**
-     *
      * @return List<StudentVO>
      */
     List<StudentVO> selectAll();
@@ -31,28 +30,24 @@ public interface StudentService {
     List<StudentVO> selectByKeywords(String keywords);
 
     /**
-     *
      * @param id
      * @return
      */
     int deleteById(String id);
 
     /**
-     *
      * @param student
      * @return
      */
     int updateById(Student student);
 
     /**
-     *
      * @param student
      * @return
      */
     int insertStudent(Student student);
 
     /**
-     *
      * @param classId
      * @return
      */
